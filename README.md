@@ -12,7 +12,7 @@ Aplicativo para cadastrar alunos, consultar por nome, série e turma, e atualiza
 
 ## Como funciona
 
-O professor cadastra o aluno com nome, série e turma. Na tabela, cada aluno aparece com saldo, campo de quantidade, botão de adicionar, botão de retirar e um pequeno botão para remover o cadastro.
+O professor cadastra o aluno com nome, série e turma. As turmas já ficam pré-configuradas como A ou B. Na tabela, cada aluno aparece com saldo, campo de quantidade, botão de adicionar, botão de retirar e um pequeno botão para remover o cadastro.
 
 Os filtros permitem buscar por:
 

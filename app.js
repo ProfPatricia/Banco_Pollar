@@ -21,7 +21,11 @@ const el = {
 };
 
 function gerarId() {
-  return crypto.randomUUID ? crypto.randomUUID() : `id_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+  if (crypto.randomUUID) return crypto.randomUUID();
+
+  return "10000000-1000-4000-8000-100000000000".replace(/[018]/g, (character) =>
+    (Number(character) ^ (crypto.getRandomValues(new Uint8Array(1))[0] & (15 >> (Number(character) / 4)))).toString(16),
+  );
 }
 
 function formatarSaldo(valor) {
@@ -152,7 +156,8 @@ async function salvarAluno(aluno) {
 
   const { error } = await supabaseClient.from("students").upsert(paraBanco(aluno));
   if (error) {
-    mostrarAviso("Não foi possível salvar no banco online.");
+    console.error(error);
+    mostrarAviso(`Não foi possível salvar: ${error.message || "verifique o Supabase"}`);
     return false;
   }
 
@@ -174,7 +179,8 @@ async function removerAluno(id) {
 
   const { error } = await supabaseClient.from("students").delete().eq("id", id);
   if (error) {
-    mostrarAviso("Não foi possível remover o aluno.");
+    console.error(error);
+    mostrarAviso(`Não foi possível remover: ${error.message || "verifique o Supabase"}`);
     return;
   }
 
@@ -196,7 +202,7 @@ function alunosFiltrados() {
 
 function renderizarFiltroTurma() {
   const atual = el.filterClass.value;
-  const turmas = [...new Set(alunos.map((aluno) => aluno.turma))]
+  const turmas = [...new Set(["A", "B", ...alunos.map((aluno) => aluno.turma)])]
     .filter(Boolean)
     .sort((a, b) => a.localeCompare(b, "pt-BR"));
 
@@ -284,7 +290,7 @@ el.studentForm.addEventListener("submit", async (event) => {
 
   const nome = el.studentName.value.trim();
   const serie = el.studentSeries.value;
-  const turma = normalizarTurma(el.studentClass.value);
+  const turma = el.studentClass.value;
 
   if (!nome || !serie || !turma) {
     mostrarAviso("Preencha nome, série e turma.");
@@ -303,7 +309,7 @@ el.studentForm.addEventListener("submit", async (event) => {
   if (!salvo) return;
 
   el.studentName.value = "";
-  el.studentClass.value = "";
+  el.studentClass.value = "A";
   el.studentName.focus();
   mostrarAviso("Aluno cadastrado.");
 });
