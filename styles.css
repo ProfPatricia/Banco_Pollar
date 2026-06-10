@@ -163,6 +163,7 @@ select {
   background: #fff;
   color: var(--text);
   font-size: 16px;
+  font-weight: 400;
 }
 
 input:focus,
@@ -243,6 +244,11 @@ td {
 th {
   background: #eef5fb;
   color: #4a5568;
+  font-weight: 800;
+}
+
+td {
+  font-weight: 400;
 }
 
 tr:hover {
@@ -253,7 +259,7 @@ tr:hover {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-weight: 800;
+  font-weight: 400;
 }
 
 .remove-button {
@@ -277,13 +283,13 @@ tr:hover {
   background: #e8f2fb;
   color: var(--primary-dark);
   font-size: 0.9rem;
-  font-weight: 800;
+  font-weight: 400;
 }
 
 .balance {
   color: var(--success);
   font-size: 1.15rem;
-  font-weight: 900;
+  font-weight: 400;
 }
 
 .action-cell {
