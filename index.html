@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pollar - Saldos dos Alunos</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app">
+      <header class="hero">
+        <div class="brand">
+          <div class="brand-mark">P$</div>
+          <div>
+            <p>Colégio Estadual Polivalente</p>
+            <h1>Pollar</h1>
+          </div>
+        </div>
+        <div class="connection-card" id="connectionStatus">Conectando ao banco...</div>
+      </header>
+
+      <section class="toolbar" aria-label="Filtros dos alunos">
+        <label>
+          Série
+          <select id="filterSeries">
+            <option value="">Todas</option>
+            <option value="6º ano">6º ano</option>
+            <option value="7º ano">7º ano</option>
+            <option value="8º ano">8º ano</option>
+            <option value="9º ano">9º ano</option>
+          </select>
+        </label>
+
+        <label>
+          Turma
+          <select id="filterClass">
+            <option value="">Todas</option>
+          </select>
+        </label>
+
+        <label class="search-field">
+          Nome
+          <input id="filterName" type="search" placeholder="Buscar aluno" />
+        </label>
+
+        <button class="secondary-button" id="refreshData" type="button">Atualizar</button>
+      </section>
+
+      <section class="layout">
+        <section class="panel">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">Cadastro</p>
+              <h2>Incluir aluno</h2>
+            </div>
+          </div>
+
+          <form id="studentForm" class="form-stack">
+            <label>
+              Nome do aluno
+              <input id="studentName" type="text" placeholder="Ex.: Ana Clara Santos" required />
+            </label>
+
+            <div class="form-row">
+              <label>
+                Série
+                <select id="studentSeries" required>
+                  <option value="6º ano">6º ano</option>
+                  <option value="7º ano">7º ano</option>
+                  <option value="8º ano">8º ano</option>
+                  <option value="9º ano">9º ano</option>
+                </select>
+              </label>
+
+              <label>
+                Turma
+                <input id="studentClass" type="text" placeholder="A" required />
+              </label>
+            </div>
+
+            <label>
+              Saldo inicial
+              <input id="studentBalance" type="number" min="0" step="1" value="0" required />
+            </label>
+
+            <button class="primary-button" type="submit">Salvar aluno</button>
+          </form>
+
+          <div class="import-box">
+            <label>
+              Importar vários alunos
+              <textarea id="bulkStudents" rows="5" placeholder="Use uma linha por aluno: Nome; Série; Turma&#10;Ex.: João Pedro; 6º ano; A"></textarea>
+            </label>
+            <button class="secondary-button" id="importStudents" type="button">Importar lista</button>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">Saldo</p>
+              <h2>Atualizar Pollars</h2>
+            </div>
+          </div>
+
+          <form id="balanceForm" class="form-stack">
+            <label>
+              Aluno
+              <select id="balanceStudent" required></select>
+            </label>
+
+            <div class="form-row">
+              <label>
+                Operação
+                <select id="balanceOperation" required>
+                  <option value="add">Adicionar</option>
+                  <option value="subtract">Retirar</option>
+                  <option value="set">Definir saldo</option>
+                </select>
+              </label>
+
+              <label>
+                Valor
+                <input id="balanceValue" type="number" min="0" step="1" value="5" required />
+              </label>
+            </div>
+
+            <label>
+              Professor
+              <input id="teacherName" type="text" placeholder="Nome do professor" />
+            </label>
+
+            <button class="primary-button" type="submit">Atualizar saldo</button>
+          </form>
+        </section>
+      </section>
+
+      <section class="panel list-panel">
+        <div class="panel-header list-header">
+          <div>
+            <p class="eyebrow">Consulta</p>
+            <h2>Saldos dos alunos</h2>
+          </div>
+          <div class="summary">
+            <span id="studentCount">0 alunos</span>
+            <strong id="totalBalance">0 P$</strong>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Aluno</th>
+                <th>Série</th>
+                <th>Turma</th>
+                <th>Saldo</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="studentRows"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="setup-panel" id="setupPanel">
+        <h2>Configuração do banco online</h2>
+        <p>Para vários professores usarem ao mesmo tempo, crie um projeto gratuito no Supabase e preencha os dados abaixo no arquivo <strong>config.js</strong>.</p>
+        <pre><code>window.POLLAR_SUPABASE_URL = "https://SEU-PROJETO.supabase.co";
+window.POLLAR_SUPABASE_ANON_KEY = "SUA_CHAVE_ANONIMA";</code></pre>
+      </section>
+    </main>
+
+    <div id="toast" role="status" aria-live="polite"></div>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="config.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
