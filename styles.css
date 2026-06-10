@@ -175,7 +175,7 @@ select:focus {
 
 .toolbar {
   display: grid;
-  grid-template-columns: minmax(190px, 1.4fr) minmax(130px, 1fr) minmax(130px, 1fr) auto;
+  grid-template-columns: minmax(190px, 1.4fr) minmax(130px, 1fr) minmax(130px, 1fr) auto auto;
   gap: 12px;
   align-items: end;
 }
@@ -203,6 +203,13 @@ label {
   box-shadow: 0 8px 18px rgba(88, 103, 123, 0.2);
 }
 
+.print-button {
+  min-height: 46px;
+  padding: 0 14px;
+  background: #8a4fb8;
+  box-shadow: 0 8px 18px rgba(138, 79, 184, 0.2);
+}
+
 .table-card {
   background: #fff;
 }
@@ -221,6 +228,12 @@ label {
 
 .table-header strong {
   color: var(--primary);
+}
+
+.print-info {
+  display: none;
+  margin-bottom: 12px;
+  color: var(--muted);
 }
 
 .table-responsive {
@@ -384,5 +397,93 @@ tr:hover {
   .table-card,
   .setup-panel {
     padding: 14px;
+  }
+}
+
+@media print {
+  body {
+    padding: 0;
+    background: #fff;
+    color: #000;
+  }
+
+  .container {
+    width: 100%;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .coin-mark,
+  .status-bar,
+  .section-box,
+  .toolbar,
+  .setup-panel,
+  .actions-col,
+  .action-cell,
+  .remove-button,
+  #toast {
+    display: none !important;
+  }
+
+  .page-header {
+    margin-bottom: 12px;
+  }
+
+  h1 {
+    color: #000;
+    font-size: 26px;
+  }
+
+  .page-header p {
+    color: #333;
+  }
+
+  .table-card {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: #fff;
+  }
+
+  .table-header {
+    margin-bottom: 4px;
+  }
+
+  .print-info {
+    display: block;
+    color: #333;
+    font-size: 13px;
+  }
+
+  .table-responsive {
+    overflow: visible;
+  }
+
+  table {
+    min-width: 0;
+    border-collapse: collapse;
+  }
+
+  th,
+  td {
+    padding: 8px;
+    border: 1px solid #bbb;
+  }
+
+  th {
+    background: #eee !important;
+    color: #000;
+  }
+
+  .badge {
+    padding: 0;
+    background: transparent;
+    color: #000;
+  }
+
+  .balance {
+    color: #000;
   }
 }

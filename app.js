@@ -15,8 +15,10 @@ const el = {
   filterSeries: document.querySelector("#filterSeries"),
   filterClass: document.querySelector("#filterClass"),
   refreshData: document.querySelector("#refreshData"),
+  printBalances: document.querySelector("#printBalances"),
   studentRows: document.querySelector("#studentRows"),
   studentSummary: document.querySelector("#studentSummary"),
+  printInfo: document.querySelector("#printInfo"),
   toast: document.querySelector("#toast"),
 };
 
@@ -213,6 +215,7 @@ function renderizarFiltroTurma() {
 function renderizarTabela() {
   const lista = alunosFiltrados();
   el.studentSummary.textContent = `${lista.length} ${lista.length === 1 ? "aluno" : "alunos"}`;
+  atualizarInfoImpressao(lista.length);
 
   if (!lista.length) {
     el.studentRows.innerHTML = `<tr><td class="empty-cell" colspan="5">Nenhum aluno encontrado.</td></tr>`;
@@ -232,7 +235,7 @@ function renderizarTabela() {
           <td><span class="badge">${aluno.serie}</span></td>
           <td><span class="badge">${aluno.turma}</span></td>
           <td class="balance">${formatarSaldo(aluno.saldo)}</td>
-          <td>
+          <td class="actions-col">
             <div class="action-cell">
               <input class="amount-input" id="valor-${aluno.id}" type="number" min="1" step="1" placeholder="Qtd" />
               <button class="btn-add" type="button" data-add="${aluno.id}">+</button>
@@ -260,6 +263,28 @@ function renderizarTabela() {
 function renderizar() {
   renderizarFiltroTurma();
   renderizarTabela();
+}
+
+function atualizarInfoImpressao(total) {
+  const partes = [];
+  if (el.filterSeries.value) partes.push(`Série: ${el.filterSeries.value}`);
+  if (el.filterClass.value) partes.push(`Turma: ${el.filterClass.value}`);
+  if (el.filterName.value.trim()) partes.push(`Nome: ${el.filterName.value.trim()}`);
+
+  const filtros = partes.length ? partes.join(" | ") : "Todas as turmas";
+  const data = new Date().toLocaleDateString("pt-BR");
+  el.printInfo.textContent = `${filtros} | ${total} ${total === 1 ? "aluno" : "alunos"} | Emitido em ${data}`;
+}
+
+function imprimirSaldos() {
+  const total = alunosFiltrados().length;
+  if (!total) {
+    mostrarAviso("Não há alunos para imprimir nesta seleção.");
+    return;
+  }
+
+  atualizarInfoImpressao(total);
+  window.print();
 }
 
 async function alterarSaldo(id, operacao) {
@@ -318,5 +343,6 @@ el.filterName.addEventListener("input", renderizarTabela);
 el.filterSeries.addEventListener("change", renderizarTabela);
 el.filterClass.addEventListener("change", renderizarTabela);
 el.refreshData.addEventListener("click", carregarAlunos);
+el.printBalances.addEventListener("click", imprimirSaldos);
 
 iniciarBanco();

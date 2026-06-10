@@ -74,6 +74,7 @@
         </label>
 
         <button id="refreshData" class="neutral-button" type="button">Atualizar lista</button>
+        <button id="printBalances" class="print-button" type="button">Imprimir saldos</button>
       </section>
 
       <section class="table-card">
@@ -81,6 +82,7 @@
           <h2>Saldos dos alunos</h2>
           <strong id="studentSummary">0 alunos</strong>
         </div>
+        <div class="print-info" id="printInfo"></div>
 
         <div class="table-responsive">
           <table>
@@ -90,7 +92,7 @@
                 <th>Série</th>
                 <th>Turma</th>
                 <th>Saldo atual</th>
-                <th>Modificar saldo</th>
+                <th class="actions-col">Modificar saldo</th>
               </tr>
             </thead>
             <tbody id="studentRows"></tbody>
