@@ -21,19 +21,29 @@
       <section class="section-box">
         <h2>Cadastrar novo aluno</h2>
         <form id="studentForm" class="student-form">
-          <input id="studentName" type="text" placeholder="Nome completo do aluno" required />
+          <label>
+            Nome do aluno
+            <input id="studentName" type="text" placeholder="Nome completo do aluno" required />
+          </label>
 
-          <select id="studentSeries" required>
-            <option value="6º ano">6º ano</option>
-            <option value="7º ano">7º ano</option>
-            <option value="8º ano">8º ano</option>
-            <option value="9º ano">9º ano</option>
-          </select>
+          <label>
+            Série
+            <select id="studentSeries" required>
+              <option value="6º ano">6º ano</option>
+              <option value="7º ano">7º ano</option>
+              <option value="8º ano">8º ano</option>
+              <option value="9º ano">9º ano</option>
+            </select>
+          </label>
 
-          <select id="studentClass" required>
-            <option value="A">Turma A</option>
-            <option value="B">Turma B</option>
-          </select>
+          <label>
+            Turma
+            <select id="studentClass" required>
+              <option value="" selected>Escolha</option>
+              <option value="A">Turma A</option>
+              <option value="B">Turma B</option>
+            </select>
+          </label>
 
           <button type="submit">Cadastrar</button>
         </form>

@@ -309,7 +309,7 @@ el.studentForm.addEventListener("submit", async (event) => {
   if (!salvo) return;
 
   el.studentName.value = "";
-  el.studentClass.value = "A";
+  el.studentClass.value = "";
   el.studentName.focus();
   mostrarAviso("Aluno cadastrado.");
 });

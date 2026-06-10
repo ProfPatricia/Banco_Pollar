@@ -150,7 +150,7 @@ h2 {
   display: grid;
   grid-template-columns: minmax(230px, 2fr) minmax(140px, 1fr) minmax(130px, 1fr) auto;
   gap: 12px;
-  align-items: center;
+  align-items: end;
 }
 
 input,
@@ -184,6 +184,15 @@ label {
   gap: 5px;
   color: #4a5568;
   font-weight: 800;
+}
+
+.student-form label {
+  min-width: 0;
+}
+
+.student-form button {
+  min-height: 46px;
+  padding: 0 18px;
 }
 
 .neutral-button {
