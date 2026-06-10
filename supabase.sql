@@ -35,3 +35,10 @@ create policy "Permitir remoção dos alunos"
 on public.students for delete
 to anon
 using (true);
+
+do $$
+begin
+  alter publication supabase_realtime add table public.students;
+exception
+  when duplicate_object then null;
+end $$;

@@ -1,31 +1,31 @@
-# Pollar - versão simplificada
+# Pollar - versão simples
 
-Aplicativo para cadastrar alunos, filtrar por série/turma/nome e atualizar o saldo de Pollars.
+Aplicativo para cadastrar alunos, consultar por nome, série e turma, e atualizar o saldo de Pollars com botões de adicionar e retirar.
 
-## Arquivos
+## Arquivos principais
 
-- `index.html`: tela do aplicativo.
-- `styles.css`: visual.
-- `app.js`: funcionamento.
-- `config.js`: configuração do banco online.
-- `supabase.sql`: comando para criar a tabela no Supabase.
+- `index.html`: estrutura da página.
+- `styles.css`: aparência da página.
+- `app.js`: cadastro, filtros, remoção e alteração de saldos.
+- `config.js`: URL e chave pública do Supabase.
+- `supabase.sql`: criação da tabela online.
 
-## Como usar sem banco online
+## Como funciona
 
-Abra o `index.html` no navegador. Os dados ficam salvos apenas no navegador usado.
+O professor cadastra o aluno com nome, série e turma. Na tabela, cada aluno aparece com saldo, campo de quantidade, botão de adicionar, botão de retirar e um pequeno botão para remover o cadastro.
 
-## Como ativar o banco online gratuito
+Os filtros permitem buscar por:
 
-1. Crie uma conta gratuita em https://supabase.com.
-2. Crie um novo projeto.
-3. No Supabase, abra o editor SQL e execute o conteúdo do arquivo `supabase.sql`.
-4. No Supabase, vá em Project Settings > API.
-5. Copie a URL do projeto e a chave `anon public`.
-6. Cole esses dados no arquivo `config.js`.
-7. Publique a pasta em um serviço gratuito, como Netlify, Vercel ou GitHub Pages.
+- Nome.
+- Série.
+- Turma.
 
-Depois disso, os professores que abrirem o mesmo aplicativo verão os mesmos alunos e poderão atualizar os saldos.
+## Banco online
+
+O arquivo `config.js` já fica preparado para conectar ao Supabase. Para criar a tabela, abra o Supabase, vá em SQL Editor e execute o conteúdo do arquivo `supabase.sql`.
+
+Depois, publique a pasta no GitHub Pages. Todos os professores que acessarem o link publicado verão os mesmos saldos e poderão atualizar os valores.
 
 ## Atenção
 
-Esta configuração é simples e fácil para uso pedagógico inicial. Para uso com dados reais de muitos alunos, o ideal é uma segunda etapa com login de professores.
+Esta versão é simples e usa chave pública do Supabase. Para uma etapa futura mais segura, o ideal é adicionar login dos professores.

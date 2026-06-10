@@ -1,71 +1,50 @@
-const LOCAL_KEY = "pollar-simplificado-v2";
+const LOCAL_KEY = "pollar-alunos-v3";
 
+let alunos = [];
 let supabaseClient = null;
-let students = [];
 let onlineReady = false;
 
-const els = {
+const el = {
   connectionStatus: document.querySelector("#connectionStatus"),
-  filterSeries: document.querySelector("#filterSeries"),
-  filterClass: document.querySelector("#filterClass"),
-  filterName: document.querySelector("#filterName"),
-  refreshData: document.querySelector("#refreshData"),
+  setupPanel: document.querySelector("#setupPanel"),
   studentForm: document.querySelector("#studentForm"),
   studentName: document.querySelector("#studentName"),
   studentSeries: document.querySelector("#studentSeries"),
   studentClass: document.querySelector("#studentClass"),
-  studentBalance: document.querySelector("#studentBalance"),
-  bulkStudents: document.querySelector("#bulkStudents"),
-  importStudents: document.querySelector("#importStudents"),
-  balanceForm: document.querySelector("#balanceForm"),
-  balanceStudent: document.querySelector("#balanceStudent"),
-  balanceOperation: document.querySelector("#balanceOperation"),
-  balanceValue: document.querySelector("#balanceValue"),
-  teacherName: document.querySelector("#teacherName"),
+  filterName: document.querySelector("#filterName"),
+  filterSeries: document.querySelector("#filterSeries"),
+  filterClass: document.querySelector("#filterClass"),
+  refreshData: document.querySelector("#refreshData"),
   studentRows: document.querySelector("#studentRows"),
-  studentCount: document.querySelector("#studentCount"),
-  totalBalance: document.querySelector("#totalBalance"),
-  setupPanel: document.querySelector("#setupPanel"),
+  studentSummary: document.querySelector("#studentSummary"),
   toast: document.querySelector("#toast"),
 };
 
-function makeId() {
-  return crypto.randomUUID ? crypto.randomUUID() : String(Date.now() + Math.random());
+function gerarId() {
+  return crypto.randomUUID ? crypto.randomUUID() : `id_${Date.now()}_${Math.random().toString(36).slice(2)}`;
 }
 
-function money(value) {
-  return `${Number(value || 0).toLocaleString("pt-BR")} P$`;
+function formatarSaldo(valor) {
+  return `P$ ${Number(valor || 0).toLocaleString("pt-BR")}`;
 }
 
-function normalizeClass(value) {
-  return value.trim().toUpperCase();
+function normalizarTurma(valor) {
+  return valor.trim().toUpperCase();
 }
 
-function showToast(message) {
-  els.toast.textContent = message;
-  els.toast.classList.add("show");
-  window.clearTimeout(showToast.timer);
-  showToast.timer = window.setTimeout(() => els.toast.classList.remove("show"), 2600);
+function mostrarAviso(texto) {
+  el.toast.textContent = texto;
+  el.toast.classList.add("show");
+  window.clearTimeout(mostrarAviso.timer);
+  mostrarAviso.timer = window.setTimeout(() => el.toast.classList.remove("show"), 2600);
 }
 
-function setStatus(message, type = "") {
-  els.connectionStatus.textContent = message;
-  els.connectionStatus.className = `connection-card ${type}`.trim();
+function atualizarStatus(texto, tipo = "") {
+  el.connectionStatus.textContent = texto;
+  el.connectionStatus.className = `status-bar ${tipo}`.trim();
 }
 
-function loadLocal() {
-  try {
-    students = JSON.parse(localStorage.getItem(LOCAL_KEY)) || [];
-  } catch {
-    students = [];
-  }
-}
-
-function saveLocal() {
-  localStorage.setItem(LOCAL_KEY, JSON.stringify(students));
-}
-
-function hasSupabaseConfig() {
+function temConfiguracaoSupabase() {
   return Boolean(
     window.POLLAR_SUPABASE_URL &&
       window.POLLAR_SUPABASE_ANON_KEY &&
@@ -74,35 +53,72 @@ function hasSupabaseConfig() {
   );
 }
 
-async function setupOnlineDatabase() {
-  if (!hasSupabaseConfig() || !window.supabase) {
+function carregarLocal() {
+  try {
+    alunos = JSON.parse(localStorage.getItem(LOCAL_KEY)) || [];
+  } catch {
+    alunos = [];
+  }
+}
+
+function salvarLocal() {
+  localStorage.setItem(LOCAL_KEY, JSON.stringify(alunos));
+}
+
+function paraBanco(aluno) {
+  return {
+    id: aluno.id,
+    name: aluno.nome,
+    series: aluno.serie,
+    class_name: aluno.turma,
+    balance: aluno.saldo,
+    updated_at: new Date().toISOString(),
+  };
+}
+
+function doBanco(registro) {
+  return {
+    id: registro.id,
+    nome: registro.name,
+    serie: registro.series,
+    turma: registro.class_name,
+    saldo: Number(registro.balance || 0),
+  };
+}
+
+async function iniciarBanco() {
+  if (!temConfiguracaoSupabase() || !window.supabase) {
     onlineReady = false;
-    els.setupPanel.hidden = false;
-    setStatus("Modo local: configure o Supabase", "offline");
-    loadLocal();
-    render();
+    el.setupPanel.hidden = false;
+    atualizarStatus("Modo local: configure o Supabase para uso por vários professores.", "local");
+    carregarLocal();
+    renderizar();
     return;
   }
 
   try {
     supabaseClient = window.supabase.createClient(window.POLLAR_SUPABASE_URL, window.POLLAR_SUPABASE_ANON_KEY);
     onlineReady = true;
-    els.setupPanel.hidden = true;
-    setStatus("Banco online conectado");
-    await loadStudents();
-    listenOnlineChanges();
+    el.setupPanel.hidden = true;
+    atualizarStatus("Banco online conectado.");
+    await carregarAlunos();
+
+    supabaseClient
+      .channel("pollar-students")
+      .on("postgres_changes", { event: "*", schema: "public", table: "students" }, carregarAlunos)
+      .subscribe();
   } catch {
     onlineReady = false;
-    setStatus("Falha ao conectar. Usando modo local.", "error");
-    loadLocal();
-    render();
+    atualizarStatus("Falha no banco online. Usando modo local.", "error");
+    carregarLocal();
+    renderizar();
   }
 }
 
-async function loadStudents() {
+async function carregarAlunos() {
   if (!onlineReady) {
-    loadLocal();
-    render();
+    carregarLocal();
+    renderizar();
     return;
   }
 
@@ -114,227 +130,187 @@ async function loadStudents() {
     .order("name", { ascending: true });
 
   if (error) {
-    setStatus("Erro ao carregar dados online", "error");
-    showToast("Verifique se a tabela students foi criada no Supabase.");
+    atualizarStatus("Erro ao carregar alunos. Confira a tabela no Supabase.", "error");
+    mostrarAviso("Não consegui carregar os alunos do banco online.");
     return;
   }
 
-  students = data.map(fromDatabaseStudent);
-  saveLocal();
-  render();
+  alunos = data.map(doBanco);
+  salvarLocal();
+  renderizar();
 }
 
-function listenOnlineChanges() {
-  supabaseClient
-    .channel("students-changes")
-    .on("postgres_changes", { event: "*", schema: "public", table: "students" }, loadStudents)
-    .subscribe();
-}
-
-function toDatabaseStudent(student) {
-  return {
-    id: student.id,
-    name: student.name,
-    series: student.series,
-    class_name: student.className,
-    balance: student.balance,
-    updated_by: student.updatedBy || "",
-    updated_at: new Date().toISOString(),
-  };
-}
-
-function fromDatabaseStudent(student) {
-  return {
-    id: student.id,
-    name: student.name,
-    series: student.series,
-    className: student.class_name,
-    balance: Number(student.balance || 0),
-    updatedBy: student.updated_by || "",
-    updatedAt: student.updated_at || "",
-  };
-}
-
-async function saveStudent(student) {
+async function salvarAluno(aluno) {
   if (!onlineReady) {
-    const index = students.findIndex((item) => item.id === student.id);
-    if (index >= 0) students[index] = student;
-    else students.push(student);
-    saveLocal();
-    render();
-    return;
+    const posicao = alunos.findIndex((item) => item.id === aluno.id);
+    if (posicao >= 0) alunos[posicao] = aluno;
+    else alunos.push(aluno);
+    salvarLocal();
+    renderizar();
+    return true;
   }
 
-  const { error } = await supabaseClient.from("students").upsert(toDatabaseStudent(student));
+  const { error } = await supabaseClient.from("students").upsert(paraBanco(aluno));
   if (error) {
-    showToast("Não foi possível salvar no banco online.");
-    return;
+    mostrarAviso("Não foi possível salvar no banco online.");
+    return false;
   }
-  await loadStudents();
+
+  await carregarAlunos();
+  return true;
 }
 
-async function deleteStudent(id) {
-  if (!confirm("Remover este aluno?")) return;
+async function removerAluno(id) {
+  const aluno = alunos.find((item) => item.id === id);
+  if (!aluno || !confirm(`Remover ${aluno.nome}?`)) return;
 
   if (!onlineReady) {
-    students = students.filter((student) => student.id !== id);
-    saveLocal();
-    render();
+    alunos = alunos.filter((item) => item.id !== id);
+    salvarLocal();
+    renderizar();
+    mostrarAviso("Aluno removido.");
     return;
   }
 
   const { error } = await supabaseClient.from("students").delete().eq("id", id);
   if (error) {
-    showToast("Não foi possível remover o aluno.");
+    mostrarAviso("Não foi possível remover o aluno.");
     return;
   }
-  await loadStudents();
+
+  await carregarAlunos();
+  mostrarAviso("Aluno removido.");
 }
 
-function filteredStudents() {
-  const series = els.filterSeries.value;
-  const className = els.filterClass.value;
-  const name = els.filterName.value.trim().toLowerCase();
+function alunosFiltrados() {
+  const nome = el.filterName.value.trim().toLowerCase();
+  const serie = el.filterSeries.value;
+  const turma = el.filterClass.value;
 
-  return students
-    .filter((student) => !series || student.series === series)
-    .filter((student) => !className || student.className === className)
-    .filter((student) => !name || student.name.toLowerCase().includes(name))
-    .sort((a, b) => a.series.localeCompare(b.series, "pt-BR") || a.className.localeCompare(b.className, "pt-BR") || a.name.localeCompare(b.name, "pt-BR"));
+  return [...alunos]
+    .filter((aluno) => !nome || aluno.nome.toLowerCase().includes(nome))
+    .filter((aluno) => !serie || aluno.serie === serie)
+    .filter((aluno) => !turma || aluno.turma === turma)
+    .sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
 }
 
-function renderClassFilter() {
-  const current = els.filterClass.value;
-  const classes = [...new Set(students.map((student) => student.className))].sort((a, b) => a.localeCompare(b, "pt-BR"));
-  els.filterClass.innerHTML = `<option value="">Todas</option>${classes.map((item) => `<option value="${item}">${item}</option>`).join("")}`;
-  if (classes.includes(current)) els.filterClass.value = current;
+function renderizarFiltroTurma() {
+  const atual = el.filterClass.value;
+  const turmas = [...new Set(alunos.map((aluno) => aluno.turma))]
+    .filter(Boolean)
+    .sort((a, b) => a.localeCompare(b, "pt-BR"));
+
+  el.filterClass.innerHTML = `<option value="">Todas</option>${turmas.map((turma) => `<option value="${turma}">${turma}</option>`).join("")}`;
+  if (turmas.includes(atual)) el.filterClass.value = atual;
 }
 
-function renderBalanceStudentOptions() {
-  const list = filteredStudents();
-  els.balanceStudent.innerHTML = list.length
-    ? list.map((student) => `<option value="${student.id}">${student.name} - ${student.series} ${student.className} - ${money(student.balance)}</option>`).join("")
-    : `<option value="">Nenhum aluno encontrado</option>`;
-}
+function renderizarTabela() {
+  const lista = alunosFiltrados();
+  el.studentSummary.textContent = `${lista.length} ${lista.length === 1 ? "aluno" : "alunos"}`;
 
-function renderRows() {
-  const list = filteredStudents();
-  els.studentRows.innerHTML = list.length
-    ? list
-        .map(
-          (student) => `
-            <tr>
-              <td><strong>${student.name}</strong></td>
-              <td>${student.series}</td>
-              <td>${student.className}</td>
-              <td><span class="balance-pill">${money(student.balance)}</span></td>
-              <td>
-                <div class="row-actions">
-                  <button class="secondary-button" type="button" data-fill="${student.id}">Selecionar</button>
-                  <button class="danger-button" type="button" data-delete="${student.id}">Remover</button>
-                </div>
-              </td>
-            </tr>
-          `,
-        )
-        .join("")
-    : `<tr><td colspan="5"><div class="empty">Nenhum aluno encontrado.</div></td></tr>`;
+  if (!lista.length) {
+    el.studentRows.innerHTML = `<tr><td class="empty-cell" colspan="5">Nenhum aluno encontrado.</td></tr>`;
+    return;
+  }
 
-  els.studentRows.querySelectorAll("[data-fill]").forEach((button) => {
-    button.addEventListener("click", () => {
-      els.balanceStudent.value = button.dataset.fill;
-      els.balanceValue.focus();
-    });
+  el.studentRows.innerHTML = lista
+    .map(
+      (aluno) => `
+        <tr>
+          <td>
+            <div class="student-name">
+              <button class="remove-button" type="button" data-remove="${aluno.id}" title="Remover aluno">×</button>
+              <span>${aluno.nome}</span>
+            </div>
+          </td>
+          <td><span class="badge">${aluno.serie}</span></td>
+          <td><span class="badge">${aluno.turma}</span></td>
+          <td class="balance">${formatarSaldo(aluno.saldo)}</td>
+          <td>
+            <div class="action-cell">
+              <input class="amount-input" id="valor-${aluno.id}" type="number" min="1" step="1" placeholder="Qtd" />
+              <button class="btn-add" type="button" data-add="${aluno.id}">+</button>
+              <button class="btn-sub" type="button" data-subtract="${aluno.id}">-</button>
+            </div>
+          </td>
+        </tr>
+      `,
+    )
+    .join("");
+
+  el.studentRows.querySelectorAll("[data-remove]").forEach((botao) => {
+    botao.addEventListener("click", () => removerAluno(botao.dataset.remove));
   });
 
-  els.studentRows.querySelectorAll("[data-delete]").forEach((button) => {
-    button.addEventListener("click", () => deleteStudent(button.dataset.delete));
+  el.studentRows.querySelectorAll("[data-add]").forEach((botao) => {
+    botao.addEventListener("click", () => alterarSaldo(botao.dataset.add, "somar"));
+  });
+
+  el.studentRows.querySelectorAll("[data-subtract]").forEach((botao) => {
+    botao.addEventListener("click", () => alterarSaldo(botao.dataset.subtract, "subtrair"));
   });
 }
 
-function renderSummary() {
-  const list = filteredStudents();
-  const total = list.reduce((sum, student) => sum + Number(student.balance || 0), 0);
-  els.studentCount.textContent = `${list.length} ${list.length === 1 ? "aluno" : "alunos"}`;
-  els.totalBalance.textContent = money(total);
+function renderizar() {
+  renderizarFiltroTurma();
+  renderizarTabela();
 }
 
-function render() {
-  renderClassFilter();
-  renderBalanceStudentOptions();
-  renderRows();
-  renderSummary();
+async function alterarSaldo(id, operacao) {
+  const campoValor = document.querySelector(`#valor-${CSS.escape(id)}`);
+  const valor = Number(campoValor.value);
+  const aluno = alunos.find((item) => item.id === id);
+
+  if (!aluno) return;
+
+  if (!valor || valor <= 0) {
+    mostrarAviso("Digite uma quantidade maior que zero.");
+    return;
+  }
+
+  if (operacao === "somar") {
+    aluno.saldo += valor;
+  } else {
+    aluno.saldo = Math.max(0, aluno.saldo - valor);
+  }
+
+  campoValor.value = "";
+  const salvo = await salvarAluno(aluno);
+  if (salvo) mostrarAviso("Saldo atualizado.");
 }
 
-els.studentForm.addEventListener("submit", async (event) => {
+el.studentForm.addEventListener("submit", async (event) => {
   event.preventDefault();
-  const student = {
-    id: makeId(),
-    name: els.studentName.value.trim(),
-    series: els.studentSeries.value,
-    className: normalizeClass(els.studentClass.value),
-    balance: Number(els.studentBalance.value || 0),
-    updatedBy: els.teacherName.value.trim(),
+
+  const nome = el.studentName.value.trim();
+  const serie = el.studentSeries.value;
+  const turma = normalizarTurma(el.studentClass.value);
+
+  if (!nome || !serie || !turma) {
+    mostrarAviso("Preencha nome, série e turma.");
+    return;
+  }
+
+  const aluno = {
+    id: gerarId(),
+    nome,
+    serie,
+    turma,
+    saldo: 0,
   };
 
-  if (!student.name || !student.className) {
-    showToast("Preencha nome, série e turma.");
-    return;
-  }
+  const salvo = await salvarAluno(aluno);
+  if (!salvo) return;
 
-  await saveStudent(student);
-  els.studentForm.reset();
-  els.studentBalance.value = 0;
-  showToast("Aluno salvo.");
+  el.studentName.value = "";
+  el.studentClass.value = "";
+  el.studentName.focus();
+  mostrarAviso("Aluno cadastrado.");
 });
 
-els.importStudents.addEventListener("click", async () => {
-  const lines = els.bulkStudents.value.split(/\n+/).map((line) => line.trim()).filter(Boolean);
-  let count = 0;
+el.filterName.addEventListener("input", renderizarTabela);
+el.filterSeries.addEventListener("change", renderizarTabela);
+el.filterClass.addEventListener("change", renderizarTabela);
+el.refreshData.addEventListener("click", carregarAlunos);
 
-  for (const line of lines) {
-    const [name, series = els.studentSeries.value, className = els.studentClass.value || "A"] = line.split(";").map((part) => part.trim());
-    if (!name) continue;
-    await saveStudent({
-      id: makeId(),
-      name,
-      series,
-      className: normalizeClass(className),
-      balance: 0,
-      updatedBy: els.teacherName.value.trim(),
-    });
-    count += 1;
-  }
-
-  els.bulkStudents.value = "";
-  await loadStudents();
-  showToast(`${count} alunos importados.`);
-});
-
-els.balanceForm.addEventListener("submit", async (event) => {
-  event.preventDefault();
-  const student = students.find((item) => item.id === els.balanceStudent.value);
-  const value = Number(els.balanceValue.value || 0);
-
-  if (!student) {
-    showToast("Selecione um aluno.");
-    return;
-  }
-
-  if (els.balanceOperation.value === "add") student.balance += value;
-  if (els.balanceOperation.value === "subtract") student.balance = Math.max(0, student.balance - value);
-  if (els.balanceOperation.value === "set") student.balance = value;
-
-  student.updatedBy = els.teacherName.value.trim();
-  student.updatedAt = new Date().toISOString();
-
-  await saveStudent(student);
-  showToast("Saldo atualizado.");
-});
-
-els.filterSeries.addEventListener("change", render);
-els.filterClass.addEventListener("change", render);
-els.filterName.addEventListener("input", render);
-els.refreshData.addEventListener("click", loadStudents);
-
-setupOnlineDatabase();
+iniciarBanco();
